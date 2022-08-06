@@ -29,8 +29,6 @@ const theme = createTheme({
 
 const network = process.env.REACT_APP_SOLANA_NETWORK as WalletAdapterNetwork;
 const rpcHost = process.env.REACT_APP_SOLANA_RPC_HOST!;
-const frcntProgramID = new anchor.web3.PublicKey(process.env.REACT_APP_COUNTER_PROGRAM_ID!);
-const frcntAccount = new anchor.web3.PublicKey(process.env.REACT_APP_COUNTER_PROGRAM_ACCOUNT!);
 const donationAddress = new anchor.web3.PublicKey(process.env.REACT_APP_DONATION_ADDRESS!);
 const connection = new anchor.web3.Connection(rpcHost
   ? rpcHost
@@ -59,8 +57,6 @@ const App = () => {
             <Redeemer
               connection={connection}
               rpcHost={rpcHost}
-              frcntrProgramId={frcntProgramID}
-              frcntrAccount={frcntAccount}
               donationAddress={donationAddress}
             />
           </WalletDialogProvider>

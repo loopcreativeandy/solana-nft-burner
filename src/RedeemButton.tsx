@@ -2,14 +2,14 @@ import styled from 'styled-components';
 import Button from '@material-ui/core/Button';
 import { CircularProgress } from '@material-ui/core';
 import { useState } from 'react';
-import { EmptyAccount } from './fee-redeemer';
+import { TokenMetas } from './burner';
 
 export const CTAButton = styled(Button)`
   width: 100%;
   height: 60px;
   margin-top: 10px;
   margin-bottom: 5px;
-  background: linear-gradient(180deg, #604ae5 0%, #813eee 100%);
+  background: linear-gradient(180deg, #604ae5 0%, #ff0000 100%);
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -17,10 +17,10 @@ export const CTAButton = styled(Button)`
 
 export const RedeemButton = ({
   onClick,
-  emptyAccounts
+  tokenMetas
 }: {
   onClick: () => Promise<void>;
-  emptyAccounts?: EmptyAccount[];
+  tokenMetas?: TokenMetas[];
 }) => {
   const [clicked, setClicked] = useState(false);
 
@@ -28,18 +28,18 @@ export const RedeemButton = ({
   const getRedeemButtonContent = () => {
     if (clicked) {
       return <CircularProgress />;
-    } else if (emptyAccounts?.length===0) {
-      return 'NO EMPTY ACCOUNTS';
+    } else if (tokenMetas?.length===0) {
+      return 'NOTHING TO BURN';
     }
 
-    return 'REDEEM';
+    return 'BURN SELECTION';
   };
 
   return (
     <CTAButton
       disabled={
         clicked ||
-        emptyAccounts?.length===0
+        tokenMetas?.length===0
       }
       onClick={async () => {
         setClicked(true);

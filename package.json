@@ -1,6 +1,6 @@
 {
-  "homepage": "https://loopcreativeandy.github.io/fee-redeemer",
-  "name": "andys-fee-redeemer",
+  "homepage": "https://loopcreativeandy.github.io/nft-burner",
+  "name": "andys-nft-burner",
   "version": "0.1.42",
   "private": true,
   "dependencies": {

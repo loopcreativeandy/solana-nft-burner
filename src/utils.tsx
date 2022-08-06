@@ -1,26 +1,26 @@
 
 import * as sweb3 from '@solana/web3.js';
 import * as anchor from "@project-serum/anchor";
-import { EmptyAccount } from './fee-redeemer';
+import { TokenMetas } from './burner';
 import { GridSelectionModel } from '@mui/x-data-grid';
 
 
 export interface EmptyAccountInfo {
     id: number,
-    account: EmptyAccount,
+    account: TokenMetas,
     lamports: number,
     metadata?: sweb3.PublicKey,
     image?: string,
     name?: string
   }
 
-export async function getEmptyAccountInfos(connection: sweb3.Connection, accounts: EmptyAccount[], callback?: any) : Promise<EmptyAccountInfo[]> {
+export async function getEmptyAccountInfos(connection: sweb3.Connection, accounts: TokenMetas[], callback?: any) : Promise<EmptyAccountInfo[]> {
     const accList = accounts.map((acc , i) => {
-        const adr =acc.publicKey.toBase58();
+        const adr =acc.tokenAccount.toBase58();
          return {account: acc, 
             id: i, 
             link:getSolscanLink(adr),
-            lamports: acc.lamports
+            lamports: acc.tokenAccountLamports
     }});
 
     //accList.forEach(element => populateMetadataInfo(connection, element));
@@ -85,5 +85,5 @@ async function getNFTName(connection: sweb3.Connection, metadataAccount: sweb3.P
 
 export function getSelectedPKsToClose(emptyAccountsInfos: EmptyAccountInfo[], selectionModel?: GridSelectionModel): sweb3.PublicKey[] {
     return emptyAccountsInfos.filter(eai => selectionModel?selectionModel.includes(eai.id):true)
-    .map(eai=>eai.account.publicKey);
+    .map(eai=>eai.account.tokenAccount);
 }

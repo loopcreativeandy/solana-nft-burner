@@ -14,7 +14,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
 import { getEmptyAccountInfos, EmptyAccountInfo, getSolscanLink, getSelectedPKsToClose } from "./utils"
-import { EmptyAccount, TotalRedemptions, findEmptyTokenAccounts, createCloseEmptyAccountsTransactions, getTotalRedemptions, getPKsToClose} from "./fee-redeemer";
+import { TokenMetas, findTokenAccounts, createBurnTransactions, getPKsToClose} from "./burner";
 import { Header } from "./Header";
 import { RedeemButton } from "./RedeemButton";
 import Link from "@mui/material/Link";
@@ -22,8 +22,6 @@ import Link from "@mui/material/Link";
 export interface RedeemerProps {
   connection: anchor.web3.Connection;
   rpcHost: string;
-  frcntrProgramId: anchor.web3.PublicKey;
-  frcntrAccount: anchor.web3.PublicKey;
   donationAddress: anchor.web3.PublicKey;
 }
 
@@ -65,8 +63,7 @@ const emptyAccountsColumns: GridColDef[] = [
 const Redeemer = (props: RedeemerProps) => {
   const connection = props.connection;
   //const [balance, setBalance] = useState<number>();
-  const [emptyAccounts, setEmptyAccounts] = useState<EmptyAccount[]>();
-  const [totalRedemptions, setTotalRedemptions] = useState<TotalRedemptions>();
+  const [tokenMetas, setTokenMetas] = useState<TokenMetas[]>();
   const [emptyAccountInfos, setEmptyAccountInfos] = useState<EmptyAccountInfo[]>();
   const [showTable, setShowTable] = useState<boolean>(false);
   //const [isInTransaction, setIsInTransaction] = useState(false); 
@@ -86,47 +83,35 @@ const Redeemer = (props: RedeemerProps) => {
   //const rpcUrl = props.rpcHost;
   const wallet = useWallet();
 
-  const anchorWallet = {
-    publicKey: wallet.publicKey,
-    signAllTransactions: wallet.signAllTransactions,
-    signTransaction: wallet.signTransaction,
-  } as anchor.Wallet;
+  // const anchorWallet = {
+  //   publicKey: wallet.publicKey,
+  //   signAllTransactions: wallet.signAllTransactions,
+  //   signTransaction: wallet.signTransaction,
+  // } as anchor.Wallet;
 
-  const provider = new anchor.Provider(connection, anchorWallet, {
-    preflightCommitment: 'recent',
-  });
-  
-  const idl = require("./frcnt_IDL.json");
-  const program = new anchor.Program(idl, props.frcntrProgramId, provider);
+  // const provider = new anchor.Provider(connection, anchorWallet, {
+  //   preflightCommitment: 'recent',
+  // });
 
 
-
-  const loadEmptyAccounts = () => {
+  const loadTokenAccounts = () => {
     (async () => {
       if (!wallet || !wallet.publicKey) return;
-      //console.log("Finding empty token accounts");
-      const updatedEA = await findEmptyTokenAccounts(connection,wallet.publicKey);
-      //console.log("Found  "+updatedEA.size);
+      const updatedAccounts = await findTokenAccounts(connection,wallet.publicKey);
 
-      setEmptyAccounts(updatedEA);
+      setTokenMetas(updatedAccounts);
       
-      const totalInfo = await getTotalRedemptions(connection,props.frcntrAccount);
-
-      if(totalInfo){
-        setTotalRedemptions(totalInfo);
-      }
-
       
     })();
   };
 
   const enableTable = async () => {
-    if(!emptyAccounts) return;
+    if(!tokenMetas) return;
     setShowTable(true);
 
     const updateStateCallback = (data : EmptyAccountInfo[]) => {
       setEmptyAccountInfos(undefined);setEmptyAccountInfos(data);}
-      const eaInfos = await getEmptyAccountInfos(connection, emptyAccounts, updateStateCallback);
+      const eaInfos = await getEmptyAccountInfos(connection, tokenMetas, updateStateCallback);
       if (eaInfos) {
         setEmptyAccountInfos(eaInfos);
         const allIDs : number[] = eaInfos.map(ea=>ea.id);
@@ -135,10 +120,9 @@ const Redeemer = (props: RedeemerProps) => {
 
   }
 
-  useEffect(loadEmptyAccounts, [
+  useEffect(loadTokenAccounts, [
     wallet,
-    connection,
-    props.frcntrAccount
+    connection
   ]);
 
   // useEffect(() => {
@@ -153,9 +137,9 @@ const Redeemer = (props: RedeemerProps) => {
   const onRedeem = async () => {
     try {
       //setIsInTransaction(true);
-      if (wallet && wallet.publicKey && emptyAccounts && emptyAccounts.length>0) {
+      if (wallet && wallet.publicKey && tokenMetas && tokenMetas.length>0) {
 
-        const closablePKs = getPKsToClose(emptyAccounts);
+        const closablePKs = getPKsToClose(tokenMetas);
         let selectedPKs = closablePKs;
         if(selectionModel && emptyAccountInfos){
           console.log(selectionModel.length+ " empty accounts selected.");
@@ -163,7 +147,7 @@ const Redeemer = (props: RedeemerProps) => {
           //console.log(selectedPKs.length+ " accounts in queue.");
         }
 
-        const transactions = await createCloseEmptyAccountsTransactions(wallet.publicKey, selectedPKs, props.frcntrAccount, program, donationPercentage, props.donationAddress);
+        const transactions = await createBurnTransactions(wallet.publicKey, selectedPKs, donationPercentage, props.donationAddress);
         for (const ta of transactions){
           const txid = await wallet.sendTransaction(ta,connection);
           console.log(txid);
@@ -213,12 +197,12 @@ const Redeemer = (props: RedeemerProps) => {
         <Paper
           style={{ padding: 24, backgroundColor: '#151A1F', borderRadius: 6 }}
         >
-          <h1>Solana Fee Redeemer</h1>
+          <h1>NFT Burner</h1>
           {!wallet.connected ? (
             <ConnectButton>Connect Wallet</ConnectButton>
           ) : (
             <>
-              <Header emptyAccounts={emptyAccounts} totalRedemptions={totalRedemptions} />
+              <Header tokenMetas={tokenMetas} />
               <MainContainer>
                 <Stack spacing={2} direction="row" alignItems="center">
                 <p>Donate:</p>
@@ -226,7 +210,7 @@ const Redeemer = (props: RedeemerProps) => {
                 <p>{donationPercentage}%</p>
                 </Stack>
                   <RedeemButton
-                    emptyAccounts={emptyAccounts}
+                    tokenMetas={tokenMetas}
                     onClick={onRedeem}
                   />
               </MainContainer>
