@@ -86,7 +86,7 @@ export async function findTokenAccounts(connection: sweb3.Connection, owner: swe
       for (let i = 0; i<8; i++){
           amount += account.account.data[offsetInBytes+i] * (2**(i*8));
       }
-      console.log("found account: "+account.pubkey.toBase58()+ " with "+amount);
+      // console.log("found account: "+account.pubkey.toBase58()+ " with "+amount);
       const mint = new sweb3.PublicKey(account.account.data.slice(0, 32));
       const t : TokenMetas = {
           id,
