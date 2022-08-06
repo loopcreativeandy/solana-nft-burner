@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import Button from '@material-ui/core/Button';
 import { CircularProgress } from '@material-ui/core';
 import { useState } from 'react';
-import { TokenMetas } from './burner';
+import { TokenMetas } from './utils';
 import { GridSelectionModel } from '@mui/x-data-grid';
 
 export const CTAButton = styled(Button)`

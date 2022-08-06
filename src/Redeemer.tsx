@@ -13,8 +13,8 @@ import * as anchor from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
-import { getEmptyAccountInfos, EmptyAccountInfo, getSolscanLink, getSelectedTokens } from "./utils"
-import { TokenMetas, findTokenAccounts, createBurnTransactions, getRedeemableLamports} from "./burner";
+import { getSolscanLink, getSelectedTokens, TokenMetas, findTokenAccounts } from "./utils"
+import { createBurnTransactions, getRedeemableLamports} from "./burner";
 import { getPriceString, Header } from "./Header";
 import { RedeemButton } from "./RedeemButton";
 import Link from "@mui/material/Link";

@@ -1,7 +1,8 @@
 
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import { TokenMetas, MAX_TOKEN_BURNS_PER_TRANSACTION, solForTokens, countNFTs } from './burner';
+import { MAX_TOKEN_BURNS_PER_TRANSACTION, } from './burner';
+import { TokenMetas, solForTokens, countNFTs } from './utils';
 
 type HeaderProps = {
   tokenMetas?: TokenMetas[];
