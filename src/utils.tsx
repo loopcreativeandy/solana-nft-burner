@@ -30,11 +30,11 @@ export interface EmptyAccountInfo {
 //     return accList;
 // }
 
-async function populateAll(connection: sweb3.Connection, tokens: TokenMetas[]) {
-    for(const t of tokens){
-        await populateMetadataInfo(connection, t);
-    }
-}
+// async function populateAll(connection: sweb3.Connection, tokens: TokenMetas[]) {
+//     for(const t of tokens){
+//         await populateMetadataInfo(connection, t);
+//     }
+// }
 
 export function getSolscanLink(address: string) : string {
     return "https://solscan.io/address/"+address;
