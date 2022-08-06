@@ -67,6 +67,6 @@ export const Header = ({ tokenMetas }: HeaderProps) => {
   );
 };
 
-const getPriceString = (price: number): string => {
+export const getPriceString = (price: number): string => {
   return `◎ ${price.toFixed(3)}`;
 };

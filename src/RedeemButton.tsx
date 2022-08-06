@@ -3,6 +3,7 @@ import Button from '@material-ui/core/Button';
 import { CircularProgress } from '@material-ui/core';
 import { useState } from 'react';
 import { TokenMetas } from './burner';
+import { GridSelectionModel } from '@mui/x-data-grid';
 
 export const CTAButton = styled(Button)`
   width: 100%;
@@ -17,10 +18,12 @@ export const CTAButton = styled(Button)`
 
 export const RedeemButton = ({
   onClick,
-  tokenMetas
+  tokenMetas,
+  selectionModel,
 }: {
   onClick: () => Promise<void>;
   tokenMetas?: TokenMetas[];
+  selectionModel?: GridSelectionModel;
 }) => {
   const [clicked, setClicked] = useState(false);
 
@@ -30,7 +33,7 @@ export const RedeemButton = ({
       return <CircularProgress />;
     } else if (tokenMetas?.length===0) {
       return 'NOTHING TO BURN';
-    } else if (tokenMetas?.length===0) {
+    } else if (!selectionModel || selectionModel?.length===0) {
       return 'SECECT TOKENS TO BURN';
     }
 
@@ -42,6 +45,9 @@ export const RedeemButton = ({
       disabled={
         clicked ||
         tokenMetas?.length===0
+        ||
+        !selectionModel||
+        selectionModel?.length===0
       }
       onClick={async () => {
         setClicked(true);

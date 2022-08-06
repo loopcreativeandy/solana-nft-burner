@@ -14,10 +14,11 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
 import { getEmptyAccountInfos, EmptyAccountInfo, getSolscanLink, getSelectedTokens } from "./utils"
-import { TokenMetas, findTokenAccounts, createBurnTransactions} from "./burner";
-import { Header } from "./Header";
+import { TokenMetas, findTokenAccounts, createBurnTransactions, getRedeemableLamports} from "./burner";
+import { getPriceString, Header } from "./Header";
 import { RedeemButton } from "./RedeemButton";
 import Link from "@mui/material/Link";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export interface RedeemerProps {
   connection: anchor.web3.Connection;
@@ -40,12 +41,17 @@ const MainContainer = styled.div``; // add your owns styles here
 
 const tokenMetaColumns: GridColDef[] = [
   { field: 'id', headerName: 'id', width: 40} ,
-  { field: 'tokenAccount', headerName: 'address', width: 400,
+  { field: 'name', headerName: 'name', width: 200} ,
+  // { field: 'tokenAccount', headerName: 'address', width: 400,
+  // renderCell: (cellValues) => {
+  //   const adr = cellValues.row.tokenAccount.toBase58();
+  //   return <Link href={getSolscanLink(adr)} target="_blank">{adr}</Link>;
+  // } },
+  { field: 'tokenAccountLamports', headerName: 'reclaimable', width: 100, 
   renderCell: (cellValues) => {
-    const adr = cellValues.row.tokenAccount.toBase58();
-    return <Link href={getSolscanLink(adr)} target="_blank">{adr}</Link>;
-  } },
-  { field: 'tokenAccountLamports', headerName: 'lamports', width: 100} ,
+    const lamports = getRedeemableLamports(cellValues.row);
+    return getPriceString(lamports/LAMPORTS_PER_SOL);
+  }} ,
   { field: 'mint', headerName: 'mint', width: 400,
   renderCell: (cellValues) => {
     const adr = cellValues.row.mint.toBase58();
@@ -215,6 +221,7 @@ const Redeemer = (props: RedeemerProps) => {
                 <p style={{color:"red"}}>Warning: this process is irreversible!</p>
                   <RedeemButton
                     tokenMetas={tokenMetas}
+                    selectionModel={selectionModel}
                     onClick={onRedeem}
                   />
               </MainContainer>
