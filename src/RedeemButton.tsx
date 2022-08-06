@@ -30,6 +30,8 @@ export const RedeemButton = ({
       return <CircularProgress />;
     } else if (tokenMetas?.length===0) {
       return 'NOTHING TO BURN';
+    } else if (tokenMetas?.length===0) {
+      return 'SECECT TOKENS TO BURN';
     }
 
     return 'BURN SELECTION';

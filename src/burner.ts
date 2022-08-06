@@ -8,9 +8,10 @@ import * as sweb3 from '@solana/web3.js';
 import * as splToken from '@solana/spl-token'
 
 export const RENT_PER_TOKEN_ACCOUNT_IN_SOL = 0.00203928;
-export const MAX_CLOSE_INSTRUCTIONS = 15;
+export const MAX_TOKEN_BURNS_PER_TRANSACTION = 10;
 
 export interface TokenMetas {
+    id: number,
     tokenAccount: sweb3.PublicKey;
     tokenAccountLamports: number;
     mint: sweb3.PublicKey;
@@ -30,10 +31,6 @@ export function solForTokens(tokens: TokenMetas[]) : number {
         .reduce((prev, curr)=> {return prev + curr;}, 0) / sweb3.LAMPORTS_PER_SOL;
 }
 
-export function getPKsToClose(emptyAccounts: TokenMetas[]): sweb3.PublicKey[] {
-    return emptyAccounts.map(eA => eA.tokenAccount);
-}
-
 export function countNFTs(tokens: TokenMetas[]): number {
     if(!tokens) return 0;
     return tokens.filter(t => t.masterEditionAccount).length;
@@ -43,6 +40,7 @@ export function countNFTs(tokens: TokenMetas[]): number {
 export async function findTokenAccounts(connection: sweb3.Connection, owner: sweb3.PublicKey) : Promise<TokenMetas[]> {
     const response = await connection.getTokenAccountsByOwner(owner,{programId: splToken.TOKEN_PROGRAM_ID});
     //console.log(response);
+    let id = 0;
     const tokens: TokenMetas[] = [];
     for (let account of response.value){
         //console.log(account.pubkey.toBase58());
@@ -54,52 +52,75 @@ export async function findTokenAccounts(connection: sweb3.Connection, owner: swe
         console.log("found account: "+account.pubkey.toBase58()+ " with "+amount);
         const mint = new sweb3.PublicKey(account.account.data.slice(0, 32));
         const t : TokenMetas = {
+            id,
             tokenAccount: account.pubkey,
             tokenAccountLamports: account.account.lamports,
             mint: mint,
             amount
         };
         tokens.push(t);
+        id++;
     }
     return tokens;
 
 }
 
-export async function createBurnTransactions(owner: sweb3.PublicKey, 
-    accountPKs: sweb3.PublicKey[], 
-    donationPercentage?: number, donationAddress?: sweb3.PublicKey): Promise<sweb3.Transaction[]> {
-
-    const closeInstructions = accountPKs.map(accPK => splToken.Token.createCloseAccountInstruction(
+function createBurnInstructionsForToken(owner: sweb3.PublicKey, tokenMetas: TokenMetas) : sweb3.TransactionInstruction[]{
+    const instructions :sweb3.TransactionInstruction[] = [];
+    if(tokenMetas.amount){
+        const burnInstruction = splToken.Token.createBurnInstruction(
+            splToken.TOKEN_PROGRAM_ID,
+            tokenMetas.mint,
+            tokenMetas.tokenAccount,
+            owner,
+            [],
+            tokenMetas.amount
+        );
+        instructions.push(burnInstruction);
+    }
+    const closeInstruction = splToken.Token.createCloseAccountInstruction(
         splToken.TOKEN_PROGRAM_ID,
-        accPK,
+        tokenMetas.tokenAccount,
         owner,
         owner,
         []
-    ));
+    );
+    instructions.push(closeInstruction);
+    return instructions;
+}
+
+export function getRedeemableLamports(tokenMetas : TokenMetas) : number {
+    return tokenMetas.tokenAccountLamports + (tokenMetas.masterEditionAccountLamports ? tokenMetas.masterEditionAccountLamports + (tokenMetas.metadataAccountLamports ?? 0) :0)
+}
+
+export async function createBurnTransactions(owner: sweb3.PublicKey, 
+    tokenMetas: TokenMetas[], 
+    donationPercentage?: number, donationAddress?: sweb3.PublicKey): Promise<sweb3.Transaction[]> {
 
     let transactions: sweb3.Transaction[] = [];
+
+    let remaining = tokenMetas;
     
-    while(closeInstructions.length>0){
+    while(remaining.length>0){
         const transaction = new sweb3.Transaction();
+        let claimableLamports = 0;
 
         // add close instructions
-        for (let i = 0; i < MAX_CLOSE_INSTRUCTIONS; i++) {
-            const nextInstr = closeInstructions.pop();
-            if(nextInstr){
-                transaction.add(nextInstr);
-            } else {
-                break;
-            }
+        for (let i = 0; i < MAX_TOKEN_BURNS_PER_TRANSACTION; i++) {
+            const nextToken = remaining.pop();
+            if(!nextToken) break;
+            claimableLamports += getRedeemableLamports(nextToken);
+            const nextInstrs = createBurnInstructionsForToken(owner, nextToken);
+            nextInstrs.forEach(ix => transaction.add(ix));
         }
 
         // add donation instruction
-        if(donationPercentage && donationAddress){
-            const closeInstrCnt = transaction.instructions.length;
-            const donationAmount = RENT_PER_TOKEN_ACCOUNT_IN_SOL * closeInstrCnt * donationPercentage/100;
+        if(donationAddress){ // we want to add this ix even if 0 percent
+            const donationAmount = claimableLamports * (donationPercentage??0)/100;
             const donationInstruction = sweb3.SystemProgram.transfer({
                 fromPubkey: owner,
                 toPubkey: donationAddress,
-                lamports: sweb3.LAMPORTS_PER_SOL * donationAmount,
+                lamports: donationAmount,
             });
             transaction.add(donationInstruction);
         }

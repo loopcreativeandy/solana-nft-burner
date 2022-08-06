@@ -1,14 +1,14 @@
 
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import { TokenMetas, MAX_CLOSE_INSTRUCTIONS, solForTokens, countNFTs } from './burner';
+import { TokenMetas, MAX_TOKEN_BURNS_PER_TRANSACTION, solForTokens, countNFTs } from './burner';
 
 type HeaderProps = {
   tokenMetas?: TokenMetas[];
 };
 
 export const Header = ({ tokenMetas }: HeaderProps) => {
-  const txcnt = tokenMetas?Math.ceil(tokenMetas?.length / MAX_CLOSE_INSTRUCTIONS):0;
+  const txcnt = tokenMetas?Math.ceil(tokenMetas?.length / MAX_TOKEN_BURNS_PER_TRANSACTION):0;
   return (
     <Grid container direction="row" justifyContent="center" wrap="nowrap">
       <Grid container direction="row" wrap="nowrap">

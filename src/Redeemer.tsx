@@ -13,8 +13,8 @@ import * as anchor from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletDialogButton } from "@solana/wallet-adapter-material-ui";
 
-import { getEmptyAccountInfos, EmptyAccountInfo, getSolscanLink, getSelectedPKsToClose } from "./utils"
-import { TokenMetas, findTokenAccounts, createBurnTransactions, getPKsToClose} from "./burner";
+import { getEmptyAccountInfos, EmptyAccountInfo, getSolscanLink, getSelectedTokens } from "./utils"
+import { TokenMetas, findTokenAccounts, createBurnTransactions} from "./burner";
 import { Header } from "./Header";
 import { RedeemButton } from "./RedeemButton";
 import Link from "@mui/material/Link";
@@ -38,17 +38,17 @@ const ConnectButton = styled(WalletDialogButton)`
 
 const MainContainer = styled.div``; // add your owns styles here
 
-const emptyAccountsColumns: GridColDef[] = [
+const tokenMetaColumns: GridColDef[] = [
   { field: 'id', headerName: 'id', width: 40} ,
-  { field: 'account', headerName: 'address', width: 400,
+  { field: 'tokenAccount', headerName: 'address', width: 400,
   renderCell: (cellValues) => {
-    const adr = cellValues.row.account.publicKey.toBase58();
+    const adr = cellValues.row.tokenAccount.toBase58();
     return <Link href={getSolscanLink(adr)} target="_blank">{adr}</Link>;
   } },
-  { field: 'lamports', headerName: 'lamports', width: 100} ,
+  { field: 'tokenAccountLamports', headerName: 'lamports', width: 100} ,
   { field: 'mint', headerName: 'mint', width: 400,
   renderCell: (cellValues) => {
-    const adr = cellValues.row.account.mint.toBase58();
+    const adr = cellValues.row.mint.toBase58();
     return <Link href={getSolscanLink(adr)} target="_blank">{adr}</Link>;
   } },
   { field: 'name', headerName: 'name', width: 200} ,
@@ -64,8 +64,8 @@ const Redeemer = (props: RedeemerProps) => {
   const connection = props.connection;
   //const [balance, setBalance] = useState<number>();
   const [tokenMetas, setTokenMetas] = useState<TokenMetas[]>();
-  const [emptyAccountInfos, setEmptyAccountInfos] = useState<EmptyAccountInfo[]>();
-  const [showTable, setShowTable] = useState<boolean>(false);
+  //const [emptyAccountInfos, setEmptyAccountInfos] = useState<EmptyAccountInfo[]>();
+  //const [showTable, setShowTable] = useState<boolean>(false);
   //const [isInTransaction, setIsInTransaction] = useState(false); 
   const [alertState, setAlertState] = useState<AlertState>({
     open: false,
@@ -105,20 +105,20 @@ const Redeemer = (props: RedeemerProps) => {
     })();
   };
 
-  const enableTable = async () => {
-    if(!tokenMetas) return;
-    setShowTable(true);
+  // const enableTable = async () => {
+  //   if(!tokenMetas) return;
+  //   setShowTable(true);
 
-    const updateStateCallback = (data : EmptyAccountInfo[]) => {
-      setEmptyAccountInfos(undefined);setEmptyAccountInfos(data);}
-      const eaInfos = await getEmptyAccountInfos(connection, tokenMetas, updateStateCallback);
-      if (eaInfos) {
-        setEmptyAccountInfos(eaInfos);
-        const allIDs : number[] = eaInfos.map(ea=>ea.id);
-        setSelectionModel(allIDs); // select all
-      }
+  //   const updateStateCallback = (data : EmptyAccountInfo[]) => {
+  //     setEmptyAccountInfos(undefined);setEmptyAccountInfos(data);}
+  //     const eaInfos = await getEmptyAccountInfos(connection, tokenMetas, updateStateCallback);
+  //     if (eaInfos) {
+  //       setEmptyAccountInfos(eaInfos);
+  //       const allIDs : number[] = eaInfos.map(ea=>ea.id);
+  //       setSelectionModel(allIDs); // select all
+  //     }
 
-  }
+  // }
 
   useEffect(loadTokenAccounts, [
     wallet,
@@ -139,15 +139,14 @@ const Redeemer = (props: RedeemerProps) => {
       //setIsInTransaction(true);
       if (wallet && wallet.publicKey && tokenMetas && tokenMetas.length>0) {
 
-        const closablePKs = getPKsToClose(tokenMetas);
-        let selectedPKs = closablePKs;
-        if(selectionModel && emptyAccountInfos){
-          console.log(selectionModel.length+ " empty accounts selected.");
-          selectedPKs = getSelectedPKsToClose(emptyAccountInfos, selectionModel);
+        let selection :TokenMetas[] = [];
+        if(selectionModel){
+          console.log(selectionModel.length+ " tokens selected.");
+          selection = getSelectedTokens(tokenMetas, selectionModel);
           //console.log(selectedPKs.length+ " accounts in queue.");
         }
 
-        const transactions = await createBurnTransactions(wallet.publicKey, selectedPKs, donationPercentage, props.donationAddress);
+        const transactions = await createBurnTransactions(wallet.publicKey, selection, donationPercentage, props.donationAddress);
         for (const ta of transactions){
           const txid = await wallet.sendTransaction(ta,connection);
           console.log(txid);
@@ -158,7 +157,7 @@ const Redeemer = (props: RedeemerProps) => {
           if(!res.value.err){
             setAlertState({
               open: true,
-              message: "Successfully redeemed some SOL!",
+              message: "Successfully burned and recovered some SOL!",
               severity: "success",
             });
           } else {
@@ -172,7 +171,7 @@ const Redeemer = (props: RedeemerProps) => {
 
       }
     } catch (error: any) {
-      let message = error.msg || "Redeem failed!";
+      let message = error.msg || "Burning failed!";
       console.trace();
 
       setAlertState({
@@ -199,7 +198,10 @@ const Redeemer = (props: RedeemerProps) => {
         >
           <h1>NFT Burner</h1>
           {!wallet.connected ? (
+            <>
+            <p >Best practice: don't user your main wallet!<br/> use a burner wallet!</p>
             <ConnectButton>Connect Wallet</ConnectButton>
+            </>
           ) : (
             <>
               <Header tokenMetas={tokenMetas} />
@@ -210,7 +212,6 @@ const Redeemer = (props: RedeemerProps) => {
                 <p>{donationPercentage}%</p>
                 
                 </Stack>
-                <p >Best practice: don't user your main wallet!<br/> use a burner wallet!</p>
                 <p style={{color:"red"}}>Warning: this process is irreversible!</p>
                   <RedeemButton
                     tokenMetas={tokenMetas}
@@ -223,22 +224,22 @@ const Redeemer = (props: RedeemerProps) => {
           <p style={{ color: "gray"}}>follow me on <a href="https://twitter.com/HeyAndyS">Twitter</a> and <a href="https://www.youtube.com/channel/UCURIDSvXkuDf9XXe0wYnoRg">YouTube</a></p>
         </Paper>
       </Container>
-      {!showTable ? <p onClick={enableTable} style={{ color: "white", textAlign: "center", cursor: "pointer"}}>Show Details</p> : 
-      emptyAccountInfos && emptyAccountInfos.length>0 ?
+      {wallet.connected && tokenMetas &&
+      tokenMetas.length>0 ?
       <div style={{ width: '100%' }}>
           <DataGrid sx={{
               color: "white",
               border: 2,
             }}
             autoHeight
-            rows={emptyAccountInfos}
-            columns={emptyAccountsColumns}
+            rows={tokenMetas}
+            columns={tokenMetaColumns}
             checkboxSelection
             selectionModel={selectionModel}
             onSelectionModelChange={setSelectionModel}
           />
       </div>
-      :<p>No empty accounts.</p>}
+      :<p>No tokens found.</p>}
       <Snackbar
         open={alertState.open}
         autoHideDuration={6000}
