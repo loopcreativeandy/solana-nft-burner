@@ -88,7 +88,7 @@ export async function createBurnTransactions(owner: sweb3.PublicKey,
 
         // add donation instruction
         if(donationAddress){ // we want to add this ix even if 0 percent
-            const donationAmount = claimableLamports * (donationPercentage??0)/100;
+            const donationAmount = Math.floor(claimableLamports * (donationPercentage??0)/100);
             const donationInstruction = sweb3.SystemProgram.transfer({
                 fromPubkey: owner,
                 toPubkey: donationAddress,

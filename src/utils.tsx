@@ -3,6 +3,7 @@ import * as sweb3 from '@solana/web3.js';
 import * as anchor from "@project-serum/anchor";
 import { GridSelectionModel } from '@mui/x-data-grid';
 import * as splToken from '@solana/spl-token';
+import { getRedeemableLamports } from './burner';
 
 
 export interface EmptyAccountInfo {
@@ -63,7 +64,7 @@ export interface TokenMetas {
 
 
 export function solForTokens(tokens: TokenMetas[]) : number {
-  return tokens.map(t => (t.tokenAccountLamports + (t.masterEditionAccountLamports || 0) + (t.metadataAccountLamports || 0)))
+  return tokens.map(t => getRedeemableLamports(t))
       .reduce((prev, curr)=> {return prev + curr;}, 0) / sweb3.LAMPORTS_PER_SOL;
 }
 
@@ -102,18 +103,23 @@ export async function findTokenAccounts(connection: sweb3.Connection, owner: swe
 
 }
 
+async function getMetadataPDA(mint: anchor.web3.PublicKey){
+  const pdaInfo = await anchor.web3.PublicKey.findProgramAddress(
+    [
+      Buffer.from('metadata'),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      mint.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  );
+  const metadataPDA = pdaInfo[0];
+  return metadataPDA;
+}
 
 async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: TokenMetas) {
   
-    const pdaInfo = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from('metadata'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        tokenMetas.mint.toBuffer(),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    );
-    const metadataPDA = pdaInfo[0];
+    const metadataPDA = await getMetadataPDA(tokenMetas.mint);
+    
     const metadataAccountInfo = await connection.getAccountInfo(metadataPDA);
 
     if(metadataAccountInfo){
@@ -132,6 +138,9 @@ async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: To
 
       // get collection
       tokenMetas.collectionMint = getCollectionMintFromMetadataAccount(metadataAccountInfo);
+      if(tokenMetas.collectionMint){
+        tokenMetas.collectionMetadataAccount = await getMetadataPDA(tokenMetas.collectionMint);
+      }
 
       // edition account
       const editionPdaInfo = await anchor.web3.PublicKey.findProgramAddress(
@@ -162,24 +171,20 @@ function getCollectionMintFromMetadataAccount(metadataAccountInfo: sweb3.Account
 
     const creatorsPresent = metadataAccountInfo.data[CREATOR_OFFSET+1];
     const creators = creatorsPresent?metadataAccountInfo.data[CREATOR_OFFSET+1]:0; // we just need to read first of 4 bytes since creator length is max 5
-    console.log("number of creators: "+creators);
+    //console.log("number of creators: "+creators);
     
     const collectionOffset = CREATOR_OFFSET+1+4 + CREATOR_SIZE*creators + ADDITIONAL_OFFSET;
     const collectionPresent = metadataAccountInfo.data[collectionOffset];
     if(!collectionPresent) return undefined;
     const verifiedCollection = metadataAccountInfo.data[collectionOffset+1];
     const collectionMint = new sweb3.PublicKey(metadataAccountInfo.data.slice(collectionOffset+2,collectionOffset+2+32));
-    const updateAuthority = new sweb3.PublicKey(metadataAccountInfo.data.slice(1,33));
-    const creatorOne = new sweb3.PublicKey(metadataAccountInfo.data.slice(CREATOR_OFFSET+1+4,CREATOR_OFFSET+1+4+32));
-    console.log("verified "+verifiedCollection);
-    console.log("collection mint "+collectionMint.toBase58());
-    console.log("update authority "+updateAuthority.toBase58());
-    console.log("creator 1 "+creatorOne.toBase58());
-    console.log("symbol "+metadataAccountInfo.data[101]);
-
-    for(let i = CREATOR_OFFSET; i< metadataAccountInfo.data.length; i++){
-     // console.log(i+": "+ metadataAccountInfo.data[i]);
-    }
+    // const updateAuthority = new sweb3.PublicKey(metadataAccountInfo.data.slice(1,33));
+    // const creatorOne = new sweb3.PublicKey(metadataAccountInfo.data.slice(CREATOR_OFFSET+1+4,CREATOR_OFFSET+1+4+32));
+    // console.log("verified "+verifiedCollection);
+    // console.log("collection mint "+collectionMint.toBase58());
+    // console.log("update authority "+updateAuthority.toBase58());
+    // console.log("creator 1 "+creatorOne.toBase58());
+    // console.log("symbol "+metadataAccountInfo.data[101]);
 
     if(verifiedCollection){
       return collectionMint;
