@@ -42,12 +42,13 @@ const MainContainer = styled.div``; // add your owns styles here
 const tokenMetaColumns: GridColDef[] = [
   { field: 'id', headerName: 'id', width: 40} ,
   { field: 'name', headerName: 'name', width: 200} ,
+  { field: 'amount', headerName: 'amount', width: 70} ,
   // { field: 'tokenAccount', headerName: 'address', width: 400,
   // renderCell: (cellValues) => {
   //   const adr = cellValues.row.tokenAccount.toBase58();
   //   return <Link href={getSolscanLink(adr)} target="_blank">{adr}</Link>;
   // } },
-  { field: 'tokenAccountLamports', headerName: 'reclaimable', width: 100, 
+  { field: 'tokenAccountLamports', headerName: 'reclaimable', width: 90, 
   renderCell: (cellValues) => {
     const lamports = getRedeemableLamports(cellValues.row);
     return getPriceString(lamports/LAMPORTS_PER_SOL);
@@ -104,7 +105,7 @@ const Redeemer = (props: RedeemerProps) => {
     (async () => {
       if (!wallet || !wallet.publicKey) return;
       const updatedAccounts = await findTokenAccounts(connection,wallet.publicKey);
-
+      
       setTokenMetas(updatedAccounts);
       
       

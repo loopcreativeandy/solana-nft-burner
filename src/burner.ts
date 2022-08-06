@@ -6,11 +6,38 @@ import * as sweb3 from '@solana/web3.js';
 //import base58 from 'bs58';
 //import splToken = require('@solana/spl-token');
 import * as splToken from '@solana/spl-token';
-import { TokenMetas } from './utils';
+//import {createBurnNftInstruction, PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID} from "@metaplex-foundation/mpl-token-metadata"; // for some reason this fails
+import { TokenMetas, TOKEN_METADATA_PROGRAM_ID } from './utils';
+import { createBurnNftInstruction } from './mplBurnNft';
 
 export const MAX_TOKEN_BURNS_PER_TRANSACTION = 10;
 
 function createBurnInstructionsForToken(owner: sweb3.PublicKey, tokenMetas: TokenMetas) : sweb3.TransactionInstruction[]{
+    if (tokenMetas.masterEditionAccount){
+        // this is an NFT
+        return [createBurnNFTInstruction(owner, tokenMetas)];
+    } else {
+        // regular SPL burn and close
+        return createBurnSPLInstructions(owner, tokenMetas);
+    }
+}
+function createBurnNFTInstruction(owner: sweb3.PublicKey, tokenMetas: TokenMetas) : sweb3.TransactionInstruction{
+    const brnAccounts = {
+        metadata: tokenMetas.metadataAccount!,
+        owner: owner,
+        mint: tokenMetas.mint,
+        tokenAccount: tokenMetas.tokenAccount,
+        masterEditionAccount: tokenMetas.masterEditionAccount!,
+        splTokenProgram: splToken.TOKEN_PROGRAM_ID,
+        collectionMetadata: tokenMetas.collectionMetadataAccount
+    };
+
+    const binstr = createBurnNftInstruction(brnAccounts, TOKEN_METADATA_PROGRAM_ID);
+    return binstr;
+}
+
+
+function createBurnSPLInstructions(owner: sweb3.PublicKey, tokenMetas: TokenMetas) : sweb3.TransactionInstruction[]{
     const instructions :sweb3.TransactionInstruction[] = [];
     if(tokenMetas.amount){
         const burnInstruction = splToken.Token.createBurnInstruction(

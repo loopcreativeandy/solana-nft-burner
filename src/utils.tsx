@@ -39,7 +39,7 @@ export function getSolscanLink(address: string) : string {
     return "https://solscan.io/address/"+address;
 }
 
-const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
+export const TOKEN_METADATA_PROGRAM_ID = new anchor.web3.PublicKey(
     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s',
   );
 
@@ -54,6 +54,8 @@ export interface TokenMetas {
   metadataAccountLamports?: number;
   masterEditionAccount?: sweb3.PublicKey;
   masterEditionAccountLamports?: number;
+  collectionMetadataAccount?: sweb3.PublicKey;
+  collectionMint?: sweb3.PublicKey;
   name?: string;
   url?: string;
   imageUrl?: string;
@@ -94,7 +96,7 @@ export async function findTokenAccounts(connection: sweb3.Connection, owner: swe
       };
       tokens.push(t);
       id++;
-      populateMetadataInfo(connection,t);
+      await populateMetadataInfo(connection,t); // eventually i want this in parallel but I don't know how to update ui properly
   }
   return tokens;
 
@@ -128,6 +130,9 @@ async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: To
       }
       tokenMetas.name = name;
 
+      // get collection
+      tokenMetas.collectionMint = getCollectionMintFromMetadataAccount(metadataAccountInfo);
+
       // edition account
       const editionPdaInfo = await anchor.web3.PublicKey.findProgramAddress(
         [
@@ -145,10 +150,43 @@ async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: To
         tokenMetas.masterEditionAccount = editionPDA; // only set if actually exists
         tokenMetas.masterEditionAccountLamports = masterEditionAccountInfo.lamports;
       }
+
     }
 }
 
+function getCollectionMintFromMetadataAccount(metadataAccountInfo: sweb3.AccountInfo<Buffer>){
 
+    const CREATOR_OFFSET = 321;
+    const CREATOR_SIZE = 32+1+1;
+    const ADDITIONAL_OFFSET = 1+1+2+2; // TODO read optionals edition nonce and token standard (currently we assume they are present)
+
+    const creatorsPresent = metadataAccountInfo.data[CREATOR_OFFSET+1];
+    const creators = creatorsPresent?metadataAccountInfo.data[CREATOR_OFFSET+1]:0; // we just need to read first of 4 bytes since creator length is max 5
+    console.log("number of creators: "+creators);
+    
+    const collectionOffset = CREATOR_OFFSET+1+4 + CREATOR_SIZE*creators + ADDITIONAL_OFFSET;
+    const collectionPresent = metadataAccountInfo.data[collectionOffset];
+    if(!collectionPresent) return undefined;
+    const verifiedCollection = metadataAccountInfo.data[collectionOffset+1];
+    const collectionMint = new sweb3.PublicKey(metadataAccountInfo.data.slice(collectionOffset+2,collectionOffset+2+32));
+    const updateAuthority = new sweb3.PublicKey(metadataAccountInfo.data.slice(1,33));
+    const creatorOne = new sweb3.PublicKey(metadataAccountInfo.data.slice(CREATOR_OFFSET+1+4,CREATOR_OFFSET+1+4+32));
+    console.log("verified "+verifiedCollection);
+    console.log("collection mint "+collectionMint.toBase58());
+    console.log("update authority "+updateAuthority.toBase58());
+    console.log("creator 1 "+creatorOne.toBase58());
+    console.log("symbol "+metadataAccountInfo.data[101]);
+
+    for(let i = CREATOR_OFFSET; i< metadataAccountInfo.data.length; i++){
+     // console.log(i+": "+ metadataAccountInfo.data[i]);
+    }
+
+    if(verifiedCollection){
+      return collectionMint;
+    }
+
+    return undefined;
+}
 
 
 export function getSelectedTokens(tokens: TokenMetas[], selectionModel?: GridSelectionModel): TokenMetas[] {
