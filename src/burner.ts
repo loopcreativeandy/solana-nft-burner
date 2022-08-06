@@ -34,6 +34,11 @@ export function getPKsToClose(emptyAccounts: TokenMetas[]): sweb3.PublicKey[] {
     return emptyAccounts.map(eA => eA.tokenAccount);
 }
 
+export function countNFTs(tokens: TokenMetas[]): number {
+    if(!tokens) return 0;
+    return tokens.filter(t => t.masterEditionAccount).length;
+}
+
 
 export async function findTokenAccounts(connection: sweb3.Connection, owner: sweb3.PublicKey) : Promise<TokenMetas[]> {
     const response = await connection.getTokenAccountsByOwner(owner,{programId: splToken.TOKEN_PROGRAM_ID});

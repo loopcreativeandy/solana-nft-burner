@@ -1,7 +1,7 @@
 
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import { TokenMetas, MAX_CLOSE_INSTRUCTIONS, solForTokens } from './burner';
+import { TokenMetas, MAX_CLOSE_INSTRUCTIONS, solForTokens, countNFTs } from './burner';
 
 type HeaderProps = {
   tokenMetas?: TokenMetas[];
@@ -30,6 +30,20 @@ export const Header = ({ tokenMetas }: HeaderProps) => {
             </Grid>
             <Grid container direction="column">
               <Typography variant="body2" color="textSecondary">
+                NFTs
+              </Typography>
+              <Typography
+                variant="h6"
+                color="textPrimary"
+                style={{
+                  fontWeight: 'bold',
+                }}
+              >
+                {`${countNFTs(tokenMetas)}`}
+              </Typography>
+            </Grid>
+            <Grid container direction="column">
+              <Typography variant="body2" color="textSecondary">
                 You can redeem
               </Typography>
               <Typography
@@ -44,20 +58,6 @@ export const Header = ({ tokenMetas }: HeaderProps) => {
                   in {`${txcnt}`} transaction{txcnt !== 1 && 's'}
                 </Typography> 
               }
-            </Grid>
-            <Grid container direction="column">
-              <Typography variant="body2" color="textSecondary">
-                TODO
-              </Typography>
-              <Typography
-                variant="h6"
-                color="textPrimary"
-                style={{
-                  fontWeight: 'bold',
-                }}
-              >
-                TOOD
-              </Typography>
             </Grid>
           </Grid>
         )}

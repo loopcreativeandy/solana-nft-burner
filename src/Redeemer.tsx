@@ -73,7 +73,7 @@ const Redeemer = (props: RedeemerProps) => {
     severity: undefined,
   });
   const [selectionModel, setSelectionModel] = useState<GridSelectionModel>();
-  const [donationPercentage, setDonationPercentage] = useState<number>(10);
+  const [donationPercentage, setDonationPercentage] = useState<number>(2);
 
   const handleDonationChange = (event: Event, newValue: number | number[]) => {
     setDonationPercentage(newValue as number);
@@ -206,9 +206,12 @@ const Redeemer = (props: RedeemerProps) => {
               <MainContainer>
                 <Stack spacing={2} direction="row" alignItems="center">
                 <p>Donate:</p>
-                <Slider aria-label="Donation Percentage" defaultValue={10} step={1} min={0} max={100} onChange={handleDonationChange} color="secondary"/>
+                <Slider aria-label="Donation Percentage" step={1} min={0} max={100} onChange={handleDonationChange} color="secondary"/>
                 <p>{donationPercentage}%</p>
+                
                 </Stack>
+                <p >Best practice: don't user your main wallet!<br/> use a burner wallet!</p>
+                <p style={{color:"red"}}>Warning: this process is irreversible!</p>
                   <RedeemButton
                     tokenMetas={tokenMetas}
                     onClick={onRedeem}
