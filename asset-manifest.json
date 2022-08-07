@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/solana-nft-burner/static/css/main.27d5ecdb.chunk.css",
-    "main.js": "/solana-nft-burner/static/js/main.8e543164.chunk.js",
-    "main.js.map": "/solana-nft-burner/static/js/main.8e543164.chunk.js.map",
+    "main.js": "/solana-nft-burner/static/js/main.66073ab5.chunk.js",
+    "main.js.map": "/solana-nft-burner/static/js/main.66073ab5.chunk.js.map",
     "runtime-main.js": "/solana-nft-burner/static/js/runtime-main.53437980.js",
     "runtime-main.js.map": "/solana-nft-burner/static/js/runtime-main.53437980.js.map",
-    "static/js/2.5e09a13c.chunk.js": "/solana-nft-burner/static/js/2.5e09a13c.chunk.js",
-    "static/js/2.5e09a13c.chunk.js.map": "/solana-nft-burner/static/js/2.5e09a13c.chunk.js.map",
+    "static/js/2.69099107.chunk.js": "/solana-nft-burner/static/js/2.69099107.chunk.js",
+    "static/js/2.69099107.chunk.js.map": "/solana-nft-burner/static/js/2.69099107.chunk.js.map",
     "static/js/3.56ecfb48.chunk.js": "/solana-nft-burner/static/js/3.56ecfb48.chunk.js",
     "static/js/3.56ecfb48.chunk.js.map": "/solana-nft-burner/static/js/3.56ecfb48.chunk.js.map",
     "index.html": "/solana-nft-burner/index.html",
     "static/css/main.27d5ecdb.chunk.css.map": "/solana-nft-burner/static/css/main.27d5ecdb.chunk.css.map",
-    "static/js/2.5e09a13c.chunk.js.LICENSE.txt": "/solana-nft-burner/static/js/2.5e09a13c.chunk.js.LICENSE.txt"
+    "static/js/2.69099107.chunk.js.LICENSE.txt": "/solana-nft-burner/static/js/2.69099107.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.53437980.js",
-    "static/js/2.5e09a13c.chunk.js",
+    "static/js/2.69099107.chunk.js",
     "static/css/main.27d5ecdb.chunk.css",
-    "static/js/main.8e543164.chunk.js"
+    "static/js/main.66073ab5.chunk.js"
   ]
 }
