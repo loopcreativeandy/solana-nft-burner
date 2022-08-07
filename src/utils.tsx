@@ -6,14 +6,6 @@ import * as splToken from '@solana/spl-token';
 import { getRedeemableLamports } from './burner';
 
 
-export interface EmptyAccountInfo {
-    id: number,
-    account: TokenMetas,
-    lamports: number,
-    metadata?: sweb3.PublicKey,
-    image?: string,
-    name?: string
-  }
 
 // export async function getEmptyAccountInfos(connection: sweb3.Connection, accounts: TokenMetas[], callback?: any) : Promise<EmptyAccountInfo[]> {
 //     const accList = accounts.map((acc , i) => {
@@ -150,6 +142,9 @@ async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: To
       }
       console.log(tokenMetas.url);
 
+      // parallel image fetching
+      fetchImageLink(tokenMetas);
+
 
       // get collection
       tokenMetas.collectionMint = getCollectionMintFromMetadataAccount(metadataAccountInfo);
@@ -208,8 +203,17 @@ function getCollectionMintFromMetadataAccount(metadataAccountInfo: sweb3.Account
     return undefined;
 }
 
-async function fetchImageLink(tokens: TokenMetas[]){
-  // fetch
+async function fetchImageLink(token: TokenMetas){
+  if(!token.url) return;
+  
+  const response = await fetch(token.url, {method: 'GET'});
+  const data = await response.json();
+  if(data["image"]){
+    console.log("external metadata: "+data["name"]+" "+data["image"]);
+    token.imageUrl = data["image"];
+  }
+
+  return data;
 }
 
 

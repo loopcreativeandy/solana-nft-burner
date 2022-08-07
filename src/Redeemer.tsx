@@ -40,7 +40,11 @@ const ConnectButton = styled(WalletDialogButton)`
 const MainContainer = styled.div``; // add your owns styles here
 
 const tokenMetaColumns: GridColDef[] = [
-  { field: 'id', headerName: 'id', width: 40} ,
+  { field: 'id', headerName: 'image', width: 80,
+  renderCell: (cellValues) => {
+    const imagelink = cellValues.row.imageUrl;
+    return <img src={imagelink} alt="" width={60}/>;
+  }} ,
   { field: 'name', headerName: 'name', width: 150} ,
   { field: 'amount', headerName: 'amount', width: 70} ,
   // { field: 'tokenAccount', headerName: 'address', width: 400,
