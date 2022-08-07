@@ -165,7 +165,7 @@ const Redeemer = (props: RedeemerProps) => {
         for (const ta of transactions){
           const txid = await wallet.sendTransaction(ta,connection);
           console.log(txid);
-          const instrCnt = ta.instructions.length;
+          // const instrCnt = ta.instructions.length;
 
           const res = await connection.confirmTransaction(txid, 'confirmed');
           if(!res.value.err){
@@ -218,7 +218,7 @@ const Redeemer = (props: RedeemerProps) => {
             </>
           ) : (
             <>
-              <Header tokenMetas={tokenMetas} />
+              <Header tokenMetas={tokenMetas} selectionModel={selectionModel}/>
               <MainContainer>
                 <Stack spacing={2} direction="row" alignItems="center">
                 <p>Donate:</p>
