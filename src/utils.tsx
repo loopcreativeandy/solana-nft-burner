@@ -136,6 +136,21 @@ async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: To
       }
       tokenMetas.name = name;
 
+      // get URL
+      const URL_OFFSET = 1+32+32+36+14;
+      const urlBuffer = metadataAccountInfo.data.slice(URL_OFFSET+4, URL_OFFSET+4+200);
+      const urlLenght = metadataAccountInfo.data.readUInt32LE(URL_OFFSET);
+      let extermalMetadataURI = "";
+      for (let j = 0; j< urlLenght; j++){
+          if (urlBuffer.readUInt8(j)===0) break;
+          extermalMetadataURI += String.fromCharCode(urlBuffer.readUInt8(j));
+      }
+      if(extermalMetadataURI.length>0){
+          tokenMetas.url = extermalMetadataURI;
+      }
+      console.log(tokenMetas.url);
+
+
       // get collection
       tokenMetas.collectionMint = getCollectionMintFromMetadataAccount(metadataAccountInfo);
       if(tokenMetas.collectionMint){
@@ -191,6 +206,10 @@ function getCollectionMintFromMetadataAccount(metadataAccountInfo: sweb3.Account
     }
 
     return undefined;
+}
+
+async function fetchImageLink(tokens: TokenMetas[]){
+  // fetch
 }
 
 

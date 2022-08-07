@@ -41,7 +41,7 @@ const MainContainer = styled.div``; // add your owns styles here
 
 const tokenMetaColumns: GridColDef[] = [
   { field: 'id', headerName: 'id', width: 40} ,
-  { field: 'name', headerName: 'name', width: 200} ,
+  { field: 'name', headerName: 'name', width: 150} ,
   { field: 'amount', headerName: 'amount', width: 70} ,
   // { field: 'tokenAccount', headerName: 'address', width: 400,
   // renderCell: (cellValues) => {
@@ -58,7 +58,11 @@ const tokenMetaColumns: GridColDef[] = [
     const adr = cellValues.row.mint.toBase58();
     return <Link href={getSolscanLink(adr)} target="_blank">{adr}</Link>;
   } },
-  { field: 'name', headerName: 'name', width: 200} ,
+  { field: 'url', headerName: 'metadata', width: 400,
+  renderCell: (cellValues) => {
+    const adr = cellValues.row.url;
+    return <Link href={adr} target="_blank">{adr}</Link>;
+  } },
   //   valueGetter: (params: GridValueGetterParams) =>
   //     `${params.row.firstName || ''} ${params.row.lastName || ''}`,
   // },
