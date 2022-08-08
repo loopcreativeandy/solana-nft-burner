@@ -10,7 +10,7 @@ import * as splToken from '@solana/spl-token';
 import { TokenMetas, TOKEN_METADATA_PROGRAM_ID } from './utils';
 import { createBurnNftInstruction } from './mplBurnNft';
 
-export const MAX_TOKEN_BURNS_PER_TRANSACTION = 6;
+export const MAX_TOKEN_BURNS_PER_TRANSACTION = 5;
 
 function createBurnInstructionsForToken(owner: sweb3.PublicKey, tokenMetas: TokenMetas) : sweb3.TransactionInstruction[]{
     if (tokenMetas.masterEditionAccount){
