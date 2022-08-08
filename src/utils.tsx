@@ -140,7 +140,7 @@ async function populateMetadataInfo(connection: sweb3.Connection, tokenMetas: To
       if(extermalMetadataURI.length>0){
           tokenMetas.url = extermalMetadataURI;
       }
-      console.log(tokenMetas.url);
+      //console.log(tokenMetas.url);
 
       // parallel image fetching
       fetchImageLink(tokenMetas);
@@ -177,13 +177,19 @@ function getCollectionMintFromMetadataAccount(metadataAccountInfo: sweb3.Account
 
     const CREATOR_OFFSET = 321;
     const CREATOR_SIZE = 32+1+1;
-    const ADDITIONAL_OFFSET = 1+1+2+2; // TODO read optionals edition nonce and token standard (currently we assume they are present)
-
-    const creatorsPresent = metadataAccountInfo.data[CREATOR_OFFSET+1];
+    
+    const creatorsPresent = metadataAccountInfo.data[CREATOR_OFFSET];
     const creators = creatorsPresent?metadataAccountInfo.data[CREATOR_OFFSET+1]:0; // we just need to read first of 4 bytes since creator length is max 5
     //console.log("number of creators: "+creators);
+
+    const enOffset = CREATOR_OFFSET+1+(creatorsPresent?4+CREATOR_SIZE*creators:0)+2;
+    const editionNoncePresent = metadataAccountInfo.data[enOffset];
+    // console.log("nonce present "+editionNoncePresent);
+    const tsOffset = enOffset+(editionNoncePresent?2:1);
+    const tokenStandardPresent = metadataAccountInfo.data[tsOffset];
+    // console.log("standard present "+tokenStandardPresent);
     
-    const collectionOffset = CREATOR_OFFSET+1+4 + CREATOR_SIZE*creators + ADDITIONAL_OFFSET;
+    const collectionOffset = tsOffset+(tokenStandardPresent?2:1);
     const collectionPresent = metadataAccountInfo.data[collectionOffset];
     if(!collectionPresent) return undefined;
     const verifiedCollection = metadataAccountInfo.data[collectionOffset+1];
@@ -209,7 +215,7 @@ async function fetchImageLink(token: TokenMetas){
   const response = await fetch(token.url, {method: 'GET'});
   const data = await response.json();
   if(data["image"]){
-    console.log("external metadata: "+data["name"]+" "+data["image"]);
+    //console.log("external metadata: "+data["name"]+" "+data["image"]);
     token.imageUrl = data["image"];
   }
 
