@@ -34,6 +34,8 @@ const connection = new anchor.web3.Connection(rpcHost
   ? rpcHost
   : anchor.web3.clusterApiUrl('mainnet-beta'));
 
+  // console.log("using network "+network);
+  // console.log("using RCP "+rpcHost);
 
 const App = () => {
   const endpoint = useMemo(() => clusterApiUrl(network), []);

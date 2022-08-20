@@ -149,6 +149,23 @@ const Redeemer = (props: RedeemerProps) => {
   //   })();
   // }, [wallet, connection]);
 
+  const displayTransactionResult = async (txid : string) => {
+    const res = await connection.confirmTransaction(txid, 'confirmed');
+    if(!res.value.err){
+      setAlertState({
+        open: true,
+        message: "Successfully burned and recovered some SOL!",
+        severity: "success",
+      });
+    } else {
+      setAlertState({
+        open: true,
+        message: res.value.err.toString(),
+        severity: "warning",
+      });
+    }
+  }
+
   const onRedeem = async () => {
     try {
       //setIsInTransaction(true);
@@ -162,24 +179,32 @@ const Redeemer = (props: RedeemerProps) => {
         }
 
         const transactions = await createBurnTransactions(wallet.publicKey, selection, donationPercentage, props.donationAddress);
-        for (const ta of transactions){
-          const txid = await wallet.sendTransaction(ta,connection);
-          console.log(txid);
-          // const instrCnt = ta.instructions.length;
-
-          const res = await connection.confirmTransaction(txid, 'confirmed');
-          if(!res.value.err){
-            setAlertState({
-              open: true,
-              message: "Successfully burned and recovered some SOL!",
-              severity: "success",
-            });
-          } else {
-            setAlertState({
-              open: true,
-              message: res.value.err.toString(),
-              severity: "warning",
-            });
+        
+        if(wallet.signAllTransactions){
+          const block = await connection.getLatestBlockhash();
+          transactions.forEach(ta => {
+            ta.recentBlockhash = block.blockhash;
+            ta.feePayer = wallet.publicKey!;
+          });
+          const signedTransactions = await wallet.signAllTransactions(transactions);
+          console.log("user has signed "+signedTransactions.length+ " transactions");
+          for (const ta of signedTransactions){
+            const txid = await connection.sendRawTransaction(
+              ta.serialize(),
+              {
+                skipPreflight: false,
+              }
+            );
+            console.log(txid);
+            // const instrCnt = ta.instructions.length;
+            displayTransactionResult(txid);
+          }
+        } else {
+          for (const ta of transactions){
+            const txid = await wallet.sendTransaction(ta,connection);
+            console.log(txid);
+            // const instrCnt = ta.instructions.length;
+            displayTransactionResult(txid);
           }
         }
 
